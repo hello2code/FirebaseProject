@@ -20,6 +20,7 @@ exports.paymentHandler = async (req, res) => {
 
   let myTopic = "payment-data"
   let myMessage = {}
+  let myData = {}
 
   // [START functions_pubsub_publish]
   // verify body params from payment webhook instead
@@ -65,6 +66,7 @@ exports.paymentHandler = async (req, res) => {
 
         // add extra data to message
         myMessage.payer_email = payerEmail
+        myData.checkout = {...checkoutData}
 
       }else{
         console.log('no')
@@ -97,8 +99,8 @@ exports.paymentHandler = async (req, res) => {
   // Publishes a message
   try {
     await topic.publish(messageBuffer);
-    
-    res.status(200).send('Message published.');
+    // res.status(200).json({ myMessage, myData }).send();
+    res.status(200).send('Message published');
   } catch (err) {
     console.error(err);
     res.status(500).send(err);
