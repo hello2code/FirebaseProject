@@ -1,5 +1,5 @@
 ## Cloud Functions
-#### paypalPaymentHandler
+#### paymentHandler
 
 - Webhook function for Paypal webhooks to call on, and publish a message to Pub/Sub
 - Get Paypal payment data
@@ -11,12 +11,12 @@
  * amount after fees
 ```
 
-#### paypalDepositDataHandler
+#### depositDataHandler
 - Subscribe to the pub/sub paypal-deposit-data topic
 - Send the data to Airtable for approval
 - Publish the following message to store inside pub/sub paypal-deposit-approved topic
 
-#### paypalPaymentApprovedHandle
+#### paymentApprovedHandler
 - Subscribe to the pub/sub paypal-deposit-approved topic
 - Send the data to Bubble for updating user by triggering a workflow
 - Send an email to the payer about the approved amount
