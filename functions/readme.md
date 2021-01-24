@@ -7,6 +7,7 @@
 - Publish the following message to store inside pub/sub paypal-deposit-data topic
 ```
  * payment id
+ * event type
  * payer email
  * amount after fees
 ```
