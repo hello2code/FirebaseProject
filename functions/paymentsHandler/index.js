@@ -38,6 +38,7 @@ exports.paymentHandler = async (req, res) => {
       // add payment data to message
       myMessage.id = req.body.resource.id
       myMessage.type = req.body.event_type
+      myMessage.status = req.body.resource.status
       myMessage.amount = req.body.resource.seller_receivable_breakdown.net_amount.value
     }catch(error){
       console.error("Unable to get all payment data, connect continue.", error)
@@ -93,6 +94,9 @@ exports.paymentHandler = async (req, res) => {
     data: {
       message: myMessage,
     },
+    attributes: {
+      ...myMessage
+    }
   };
   const messageBuffer = Buffer.from(JSON.stringify(messageObject), 'utf8');
 

@@ -13,7 +13,7 @@
 ```
 ```Trigger by external webhook```
 
-#### depositDataHandler
+#### paymentDataHandler
 - Subscribe to the pub/sub `payment-data` topic
 - Send the data to Airtable for approval
 - Publish the following message to store inside pub/sub `payment-approved` topic
