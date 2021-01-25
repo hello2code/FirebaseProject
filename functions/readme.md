@@ -16,12 +16,12 @@
 #### paymentDataHandler
 - Subscribe to the pub/sub `payment-data` topic
 - Send the data to Airtable for approval
-- Publish the following message to store inside pub/sub `payment-approved` topic
+- Publish the following message to store inside pub/sub `payment-received` topic
 
 ```Trigger by Pub/Sub topic```
 
 #### paymentApprovedHandler
-- Subscribe to the pub/sub `payment-approved` topic
+- Subscribe to the pub/sub `payment-received` topic
 - Send the data to Bubble for updating user by triggering a workflow
 - Send an email to the payer about the approved amount
 

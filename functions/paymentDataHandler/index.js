@@ -16,24 +16,22 @@ Airtable.configure({
 });
 const base = Airtable.base("appUjyaWbH3gUfaZt");
 
-async function publishPaymentApprovedMessage(record){
+async function publishPaymentApprovedMessage(records){
     // References an existing topic
-    const topic = pubsub.topic("payment-approved");
-    const messageObject = {
-        data: {
-            message: {
-                'payer_email': record.fields['Payer Email'],
-                'amount': record.fields['Amount After Fee']
-            },
-        },
-    };
-    const messageBuffer = Buffer.from(JSON.stringify(messageObject), 'utf8');
-
-    // Publishes a message
     return new Promise( resolve => {
         try {
+            const topic = pubsub.topic("payment-received");
+            const messageObject = {
+                data: {
+                    message: {
+                        'payer_email': records[0].fields['Payer Email'],
+                        'amount': record[0].fields['Amount After Fee']
+                    },
+                },
+            };
+            const messageBuffer = Buffer.from(JSON.stringify(messageObject), 'utf8');
+
             topic.publish(messageBuffer);
-            // res.status(200).json({ myMessage, myData }).send();
             resolve(true)
         } catch (err) {
             console.error(err);
@@ -135,8 +133,13 @@ exports.paymentDataHandler = async (pubsubMessage) => {
 
     const {id, amount, payer_email, type, status} = data.attributes
 
+    if(!id || !payer_email){
+        throw({error: "Message does not contain id or email"})
+        // res.status(500).json({reason: "Message does not contain id or email"}).send()
+    }
+
     // only if the event is `PAYMENT.CAPTURE.COMPLETED`, then do things in airtable
-    if(type === 'PAYMENT.CAPTURE.COMPLETED' && id && payer_email){
+    if(type === 'PAYMENT.CAPTURE.COMPLETED'){
 
         // find existing records
         let resultRecords
@@ -144,35 +147,43 @@ exports.paymentDataHandler = async (pubsubMessage) => {
             resultRecords = await findRecordInAirtable(`{Transaction ID} = '${id}'`, tablePaymentCompleted)
         }catch(err){
             console.error("Airtable select error", err)
-            res.status(500).json(err).send()
+            // res.status(500).json(err).send()
+            throw({error: error})
         }
         
         // create the new record if it's not found
         if(!resultRecords.length){
+            let createdRecords
             try{
-                await createRecordInAirtable(data.attributes, tablePaymentCompleted)
+                createdRecords = await createRecordInAirtable(data.attributes, tablePaymentCompleted)
             }catch(err){
                 console.error("Airtable create error", err)
-                res.status(500).json(err).send()
+                // res.status(500).json(err).send()
+                throw({error: error})
+            }
+
+            // send the message to pubsub after record created in airtable
+            if(await publishPaymentApprovedMessage(createdRecords)){
+                console.log("Message for payment-received sent")
+                // res.status(200).send('OK')
+            }else{
+                // res.status(500).send('Failed to log message to pubsub after successfully crated record in airtable')
+                throw({error: 'Failed to log message to pubsub after successfully crated record in airtable'})
             }
         }else{
             // found existing records, not creating
-            res.status(200).json([...resultRecords]).send();
-        }
-
-        // send the message to pubsub after record created in airtable
-        if(await publishPaymentApprovedMessage(resultRecords)){
-            res.status(200).send('OK')
-        }else{
-            res.status(500).send('Failed to log message to pubsub after successfully crated record in airtable')
+            // res.status(200).json({"reason": "Found existing record", data: [...resultRecords]}).send();
+            console.log("Found existing record, OK.")
         }
 
     }else if( type === ''){
         // if it's failed payment
 
         // send notification emails
-    }
+    }else{
 
-    res.status(200).json({ reason: "Unhandled event", ...data.attributes}).send();
+        // res.status(200).json({ reason: "Unhandled event", ...data.attributes}).send();
+        console.log("Unhandled event", data.attributes.type)
+    }
     
   };
